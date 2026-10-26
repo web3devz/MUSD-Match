@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { amount, formatAmount, encodeOffer, decodeOffer, validateOffer, CHAIN_ID, type SignedOffer } from '../src/offers.ts';
+const settlement = '0x1111111111111111111111111111111111111111';
+const valid: SignedOffer = { version: 1, chainId: CHAIN_ID, settlement, signature: '0x1234', offer: { maker: '0x2222222222222222222222222222222222222222', taker: '0x0000000000000000000000000000000000000000', musdAmount: amount('1000'), btcAmount: amount('0.01'), expiry: 9999999999n, nonce: 1n } };
+test('exact 18-decimal conversion without floating point',()=>{assert.equal(amount('0.000000000000000001'),1n);assert.equal(amount('1000'),1000n*10n**18n);});
+test('large integer display does not lose digits to floating point',()=>assert.equal(formatAmount(123456789012345678901234567890000000000000000n,2),'123,456,789,012,345,678,901,234,567.89'));
+test('reject ambiguous, zero, negative, overprecision and overflow inputs',()=>{for(const input of ['0','-1','1e3','1,000','01','0.0000000000000000001','9'.repeat(80),'Infinity'])assert.throws(()=>amount(input));});
+test('signed links round-trip integer amounts',()=>assert.deepEqual(decodeOffer(encodeOffer(valid),settlement),valid));
+test('reject cross-deployment and cross-chain links',()=>{assert.throws(()=>decodeOffer(encodeOffer({...valid,chainId:1}),settlement));assert.throws(()=>decodeOffer(encodeOffer(valid),'0x3333333333333333333333333333333333333333'));});
+test('reject expired and malformed links',()=>{assert.throws(()=>validateOffer({...valid.offer,expiry:1n}));assert.throws(()=>decodeOffer('%invalid',settlement));assert.throws(()=>decodeOffer('x'.repeat(16001),settlement));assert.throws(()=>decodeOffer(encodeOffer({...valid,signature:'0xzz' as `0x${string}`}),settlement));});
+test('reject numeric amount coercion from untrusted JSON',()=>{const raw=JSON.parse(decodeURIComponent(encodeOffer(valid)));raw.offer.musdAmount=1000;assert.throws(()=>decodeOffer(encodeURIComponent(JSON.stringify(raw)),settlement));});

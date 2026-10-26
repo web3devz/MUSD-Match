@@ -1,0 +1,15 @@
+{
+  "name": "musd-match",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:contracts": "cd contracts && forge test --offline"
+  },
+  "dependencies": { "react": "19.3.0", "react-dom": "19.3.0", "viem": "2.57.3" },
+  "devDependencies": { "@types/react": "19.1.12", "@types/react-dom": "19.1.9", "@types/node": "22.10.0", "typescript": "5.7.2", "vite": "5.4.21" }
+}
